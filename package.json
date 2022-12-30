@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npx hardhat test",
+    "deploy:testnet": "npx hardhat --network testnet run scripts/deploy.js",
+    "generate": "npx hardhat run scripts/generate.js > accounts.json"
   },
   "author": "",
   "license": "ISC",
@@ -12,6 +14,7 @@
     "@nomiclabs/hardhat-waffle": "^2.0.3",
     "@nomiclabs/hardhat-web3": "^2.0.0",
     "@openzeppelin/contracts": "^4.8.0",
-    "chai": "^4.3.7"
+    "chai": "^4.3.7",
+    "dotenv": "^16.0.3"
   }
 }

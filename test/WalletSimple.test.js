@@ -1,8 +1,7 @@
 // test/RiskControl.test.js
 // Load dependencies
-const { expect, util } = require('chai')
-const eth_util = require('ethereumjs-util')
-const {keccak256} = require('@ethersproject/keccak256')
+const { expect } = require('chai')
+const { bytecode } = require("../artifacts/contracts/Forwarder.sol/Forwarder.json")
 
 describe('WalletSimple', function () {
   let deployer
@@ -46,7 +45,7 @@ describe('WalletSimple', function () {
       let tx = await wallet.connect(signer1).createForwarder(idx)
       const receipt = await tx.wait();
       const evt = receipt.events[receipt.events.length - 1];
-      
+
       let forwarderAddr = evt.args[0]
       let amount = ethers.utils.parseUnits('999', USDTDecimals)
       tx = await usdt.connect(user).transfer(forwarderAddr, amount)
@@ -73,7 +72,7 @@ describe('WalletSimple', function () {
       let expireTime = bestBlock.timestamp + 60
       let sequenceId = await wallet.getNextSequenceId()
       let toAddress = signer3.address
-      const operationHash = ethers.utils.solidityKeccak256(['string', 'address', 'uint', 'address', 'uint', 'uint'], [tokenPrefix, toAddress, amount, usdt.address, expireTime, sequenceId]) 
+      const operationHash = ethers.utils.solidityKeccak256(['string', 'address', 'uint', 'address', 'uint', 'uint'], [tokenPrefix, toAddress, amount, usdt.address, expireTime, sequenceId])
 
       let flatSig = await signer2.signMessage(ethers.utils.arrayify(operationHash))
       let sig = ethers.utils.arrayify(flatSig)
@@ -83,14 +82,17 @@ describe('WalletSimple', function () {
     })
   })
 
-  // describe('createForwarder ( uint256 )', function () {
-  //   it('success', async function () {
-  //     let forwarderAddr = "0x0ecb65994620b246ea9C9E41378A615ef63FeAC5"
-  //     let idx = 0
-  //     await expect(
-  //       wallet.connect(signer1).createForwarder(idx)
-  //     ).to.emit(wallet, 'CreateForwarder')
-  //       .withArgs(forwarderAddr, signer1.address, idx)
-  //   })
-  // })
+  describe('createForwarder ( uint256 )', function () {
+    it('success', async function () {
+      const initCodeHash = ethers.utils.keccak256(bytecode)
+      const idx = 0
+      const salt = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(["address", "uint256"], [signer1.address, idx]))
+      let forwarderAddr = ethers.utils.getCreate2Address(wallet.address, salt, initCodeHash)
+
+      await expect(
+        wallet.connect(signer1).createForwarder(idx)
+      ).to.emit(wallet, 'CreateForwarder')
+        .withArgs(forwarderAddr, signer1.address, idx)
+    })
+  })
 })
